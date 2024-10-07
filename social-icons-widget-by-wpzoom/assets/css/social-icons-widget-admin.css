@@ -44,13 +44,24 @@ border-radius: 0;
 .zoom-social-icons__field-icon-handler:hover{
     opacity: 0.8;
 }
-.zoom-social-icons__field-trash { margin-top: 18px; margin-left: -40px; text-decoration: none; display: block; text-align: right; }
+.zoom-social-icons__field-trash,
+.zoom-social-icons__field-edit { 
+    margin-top: 18px; 
+    margin-left: -45px; 
+    text-decoration: none; 
+    display: inline-block; 
+    text-align: right; 
+}
+.zoom-social-icons__field-trash {
+    margin-left:-20px;
+}
 .zoom-social-icons__list--no-labels .zoom-social-icons__field-trash { margin-top: 2px; }
 .zoom-social-icons__add-button { margin-bottom: 10px; }
 .zoom-social-icons__field .toggle-extra-options{
     cursor: pointer;
-    margin-left: -6px;
-    margin-top: 2px;
+    position: absolute;
+    right: -15px;
+    top: 22px;
 }
 
 .zoom-social-icons__field .extra-options{
@@ -291,4 +302,54 @@ border-radius: 0;
 .wp-block-legacy-widget .zoom-social-icons__notice {
 	display: block !important;
 	font-size: 14px;
+}
+
+/* Shortcodes page */
+
+.social_shortcode_wrap {
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 1px rgb(0 0 0 / 4%);
+    background: #fff;
+    padding: 30px;
+    overflow: hidden;
+}
+
+.social_shortcode_wrap .social_shortcode_wrap_left {
+    float: left;
+    width: 45%;
+}
+
+.social_shortcode_wrap .social_shortcode_wrap_right {
+    float: right;
+    width: 45%;
+}
+
+.social_shortcode_wrap .social_shortcode_wrap_left > p:nth-child(1),
+.social_shortcode_wrap .social_shortcode_wrap_left > p:nth-child(2),
+.social_shortcode_wrap .social_shortcode_wrap_left > p:nth-child(3) {
+    display: none;
+}
+
+
+.social_shortcode_wrap .zoom-social-icons__list {
+    background: #f0f0f1;
+    padding: 25px;
+    margin: 15px 0;
+}
+
+
+#wpz-social-shortcode {
+    min-width: 300px;
+    font-family: Consolas,Monaco,monospace;
+}
+
+
+@media screen and (max-width: 800px) {
+
+    .social_shortcode_wrap .social_shortcode_wrap_right,
+    .social_shortcode_wrap .social_shortcode_wrap_left {
+        float: none;
+        width: 100%;
+    }
+
 }

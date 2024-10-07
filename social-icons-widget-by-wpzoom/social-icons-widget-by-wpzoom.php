@@ -3,13 +3,13 @@
  * Plugin Name:         Social Icons Widget & Block by WPZOOM
  * Plugin URI:          https://www.wpzoom.com/plugins/social-widget/
  * Description:         Social Icons Widget & Block to display links to social media networks websites. Supports most of the known social networks and includes more than 400 icons. Sort icons by Drag & Drop and change their color easily.
- * Version:             4.2.18
+ * Version:             4.3.0
  * Author:              WPZOOM
  * Author URI:          https://www.wpzoom.com/
  * Text Domain:         social-icons-widget-by-wpzoom
  * License:             GNU General Public License v2.0 or later
  * License URI:         http://www.gnu.org/licenses/gpl-2.0.txt
- * Requires at least:   5.2
+ * Requires at least:   5.8
  * Tested up to:        6.6
  *
  * @package WPZOOM_Social_Icons
@@ -39,8 +39,11 @@ if ( empty( $wpzoom_social_icons_settings['disable-block'] ) ) {
 	require_once plugin_dir_path( __FILE__ ) . 'block/src/init.php';
 }
 
+
+require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-zoom-social-icons-widget.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-wpzoom-social-icons-shortcode.php';
+
 if ( empty( $wpzoom_social_icons_settings['disable-widget'] ) ) {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-zoom-social-icons-widget.php';
 
 	/**
 	 * Register the widget
@@ -303,12 +306,12 @@ if ( ! function_exists( 'wpzoom_social_icons_upgrade_pro_notice' ) ) {
 				<div class="wpz-social-icons-notice-content">
 					<?php
 					/* translators: %s The heading title */
-					echo sprintf( '<h3>%s</h3>', esc_html__( '🤩&nbsp; Thank you for using Social Icons Widget by WPZOOM!', 'social-icons-widget-by-wpzoom' ) );
+					echo sprintf( '<h3>%s</h3>', esc_html__( 'The Ultimate Social Media Icons Plugin for WordPress 🤩&nbsp;', 'social-icons-widget-by-wpzoom' ) );
 					?>
 					<p class="wpz-social-icons-notice-text">
 					<?php
 					/* translators: %s The pro version features */
-					echo sprintf( esc_html__( 'Big News! We\'ve released a new PRO version with unique features such as %s', 'social-icons-widget-by-wpzoom' ), '<strong>' . esc_html__( 'SVG Icons Uploader, Loading Icons in SVG format, and many other improvements to boost your PageSpeed score!', 'social-icons-widget-by-wpzoom' ) . '</strong>' );
+					echo sprintf( esc_html__( 'Upgrade to the PRO version to unlock unique features such as the %s', 'social-icons-widget-by-wpzoom' ), '<strong>' . esc_html__( 'Custom SVG Icons Uploader, Loading Icons in SVG format, Adding Icons to Menus, and more!', 'social-icons-widget-by-wpzoom' ) . '</strong>' );
 					?>
 					</p>
 					<p class="wpz-social-icons-notice-actions">
@@ -383,7 +386,7 @@ if ( ! function_exists( 'wpzoom_social_icons_admin_notices' ) ) {
 		$should_display_notice = ( ( 'index.php' === $pagenow || 'plugins.php' === $pagenow || 'options-general.php' === $pagenow && 'wpzoom-social-icons-widget' === $page ) && $is_active && ! $dismiss_notice ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( $should_display_notice ) {
-			// wpzoom_social_icons_upgrade_pro_notice();
+			wpzoom_social_icons_upgrade_pro_notice();
 		}
 	}
 	add_action( 'admin_notices', 'wpzoom_social_icons_admin_notices' );

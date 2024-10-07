@@ -57,6 +57,13 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 	);
 
 	/**
+	 * The single class instance.
+	 *
+	 * @var $instance
+	 */
+	private static $instance = null;
+
+	/**
 	 * Widget base ID.
 	 *
 	 * @var string
@@ -76,6 +83,17 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 	 * @var array
 	 */
 	public $widget_options = array();
+
+	/**
+	 * Main Instance
+	 * Ensures only one instance of this class exists in memory at any one time.
+	 */
+	public static function get_instance() {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
 
 	/**
 	 * Constructor.
@@ -267,8 +285,9 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 		$is_screen_widgets       = ! empty( $current_screen->id ) && 'widgets' === $current_screen->id;
 		$is_screen_block_widgets = ! empty( $current_screen->id ) && 'appearance_page_gutenberg-widgets' === $current_screen->id;
 		$is_screen_customize     = ! empty( $current_screen->id ) && 'customize' === $current_screen->id;
+		$is_screen_shortcode     = ! empty( $current_screen->id ) && 'wpzoom-shortcode' === $current_screen->id;
 
-		if ( $is_screen_widgets || $is_screen_block_widgets || $is_screen_customize ) {
+		if ( $is_screen_widgets || $is_screen_block_widgets || $is_screen_customize || $is_screen_shortcode ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'admin_scripts' ) );
 			add_action( 'admin_print_footer_scripts', array( $this, 'admin_js_templates' ) );
 		}
@@ -681,6 +700,7 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 		?>
 <div class="form-instance" <?php echo $instance_attr; ?> id="<?php echo $this->id; ?>">
+<div class="social_shortcode_wrap_left">
 	<p>
 		<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php esc_html_e( 'Title:', 'social-icons-widget-by-wpzoom' ); ?></label>
 		<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" v-model="title" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" />
@@ -757,7 +777,7 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 	</p>
 
 	<p class="description">
-		<?php echo wp_kses_post( __( 'This option has no effect if <i>Color Icon / No Background</i> icon style is selected.', 'social-icons-widget-by-wpzoom' ) ); ?>
+		<?php echo wp_kses_post( __( 'This option has no effect if the <i>Color Icon / No Background</i> icon style is selected.', 'social-icons-widget-by-wpzoom' ) ); ?>
 	</p>
 
 	<p>
@@ -771,6 +791,10 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 			<input type="number" min="0" max="200" id="<?php echo $this->get_field_id( 'icon_font_size' ); ?>" name="<?php echo $this->get_field_name( 'icon_font_size' ); ?>" v-model="icon_font_size" class="widefat" />
 		</label>
 	</p>
+
+	</div>
+
+	<div class="social_shortcode_wrap_right">
 
 	<p>
 		<label><?php esc_html_e( 'Set color for all icons', 'social-icons-widget-by-wpzoom' ); ?></label>
@@ -845,7 +869,7 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 		?>
 	</div>
 
-	<ul v-sortable="{ handle: '.zoom-social-icons__field-handle', onUpdate : onUpdate  }" class="zoom-social-icons__list" :class="{ 'zoom-social-icons__list--no-labels' : show_icon_labels !== 'true' }">
+	<ul v-sortable="{ handle: '.zoom-social-icons__field-handle', onUpdate : onUpdate  }" class="zoom-social-icons__list">
 
 		<template v-for="(field, key) in fields">
 
@@ -868,9 +892,9 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 					</div>
 				</div>
 
-
-				<a v-show='fields.length > 1' class="zoom-social-icons__field-trash" href="#" @click.prevent="clickOnDeleteIconHandler(key)"><span class="dashicons dashicons-trash"></span></a>
-				<span :class="toggleExtraOptionsClass(key)" @click.prevent='toggleExtraOptions(key, field)'></span>
+				<a title="Edit" v-show='fields.length > 1' @click.prevent="openModal(key)" class="zoom-social-icons__field-edit" href="#"><span class="dashicons dashicons-admin-appearance"></span></a>
+				<a title="Remove" v-show='fields.length > 1' class="zoom-social-icons__field-trash" href="#" @click.prevent="clickOnDeleteIconHandler(key)"><span class="dashicons dashicons-trash"></span></a>
+				<span title="Expand" :class="toggleExtraOptionsClass(key)" @click.prevent='toggleExtraOptions(key, field)'></span>
 				<br style="clear:both">
 				<div class="extra-options" v-show="field.show_extra_options == true">
 					<p>
@@ -900,8 +924,9 @@ class Zoom_Social_Icons_Widget extends WP_Widget {
 	</p>
 
 	<p class="description">
-		<?php echo wp_kses_post( __( 'Note that icons above is not how they will look on front-end. This is just for reference.', 'social-icons-widget-by-wpzoom' ) ); ?>
+		<?php echo wp_kses_post( __( 'Note that the icons above may not look the same on the front end. This is just for reference.', 'social-icons-widget-by-wpzoom' ) ); ?>
 	</p>
+	</div>
 </div>
 		<?php
 		// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
