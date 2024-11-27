@@ -3,7 +3,7 @@
  * Plugin Name:         Social Icons Widget & Block by WPZOOM
  * Plugin URI:          https://www.wpzoom.com/plugins/social-widget/
  * Description:         Social Icons Widget & Block to display links to social media networks websites. Supports most of the known social networks and includes more than 400 icons. Sort icons by Drag & Drop and change their color easily.
- * Version:             4.3.3
+ * Version:             4.3.4
  * Author:              WPZOOM
  * Author URI:          https://www.wpzoom.com/
  * Text Domain:         social-icons-widget-by-wpzoom
@@ -42,6 +42,11 @@ if ( empty( $wpzoom_social_icons_settings['disable-block'] ) ) {
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-zoom-social-icons-widget.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-wpzoom-social-icons-shortcode.php';
+
+$current_theme = get_template();
+if( 'inspiro' !== $current_theme  ) {
+    require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-wpzoom-marketing-banner.php';
+}
 
 if ( empty( $wpzoom_social_icons_settings['disable-widget'] ) ) {
 
@@ -239,7 +244,7 @@ if ( ! function_exists( 'wpzoom_social_icons_plugin_action_links' ) ) {
 		$is_active = is_plugin_active( WPZOOM_SOCIAL_ICONS_PLUGIN_BASE ); // Used to prevent the display of admin notice when activate PRO version of the plugin.
 
 		if ( $is_active ) {
-			$settings_link = sprintf( '<a href="%1$s">%2$s</a>', admin_url( 'options-general.php?page=' . WPZOOM_Social_Icons_Settings::$menu_slug ), esc_html__( 'Settings', 'social-icons-widget-by-wpzoom' ) );
+			$settings_link = sprintf( '<a href="%1$s">%2$s</a>', admin_url( 'edit.php?post_type=wpzoom-shortcode&page=' . WPZOOM_Social_Icons_Settings::$menu_slug ), esc_html__( 'Settings', 'social-icons-widget-by-wpzoom' ) );
 
 			array_unshift( $links, $settings_link );
 
@@ -386,7 +391,7 @@ if ( ! function_exists( 'wpzoom_social_icons_admin_notices' ) ) {
 		$should_display_notice = ( ( 'index.php' === $pagenow || 'plugins.php' === $pagenow || 'options-general.php' === $pagenow && 'wpzoom-social-icons-widget' === $page ) && $is_active && ! $dismiss_notice ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( $should_display_notice ) {
-			wpzoom_social_icons_upgrade_pro_notice();
+			// wpzoom_social_icons_upgrade_pro_notice();
 		}
 	}
 	add_action( 'admin_notices', 'wpzoom_social_icons_admin_notices' );
