@@ -56,15 +56,45 @@ function wpzoom_social_icons_block_enqueue_assets() {
 		$asset_file['version']
 	);
 
+	// Get sharing config ID and URL for the Auto-Display Configuration panel
+	$sharing_config_id = null;
+	$sharing_config_url = null;
+	$is_editing_sharing_config = false;
+	$sharing_posts = get_posts( array(
+		'post_type'      => 'wpzoom-sharing',
+		'posts_per_page' => 1,
+		'post_status'    => 'publish',
+	) );
+	if ( ! empty( $sharing_posts ) ) {
+		$sharing_config_id = $sharing_posts[0]->ID;
+		$sharing_config_url = admin_url( 'post.php?post=' . $sharing_config_id . '&action=edit' );
+
+		// Check if we're currently editing the sharing config post
+		// get_current_screen() is only available after admin_init, so check if function exists
+		if ( function_exists( 'get_current_screen' ) ) {
+			$current_screen = get_current_screen();
+			if ( $current_screen && $current_screen->post_type === 'wpzoom-sharing' ) {
+				// Also check the post ID from the request
+				$post_id = isset( $_GET['post'] ) ? intval( $_GET['post'] ) : 0;
+				if ( $post_id === $sharing_config_id ) {
+					$is_editing_sharing_config = true;
+				}
+			}
+		}
+	}
+
 	// WP Localized globals.
 	wp_localize_script(
 		'wpzoom-social-icons-block-js',
 		'wpzSocialIconsBlock',
 		array(
-			'pluginDirPath'      => plugin_dir_path( __DIR__ ),
-			'pluginDirUrl'       => plugin_dir_url( __DIR__ ),
-			'icons'              => include WPZOOM_SOCIAL_ICONS_PLUGIN_PATH . 'includes/icons-data.php',
-			'iconKitsCategories' => zoom_social_icons_kits_categories_list( 'block' ),
+			'pluginDirPath'            => plugin_dir_path( __DIR__ ),
+			'pluginDirUrl'             => plugin_dir_url( __DIR__ ),
+			'icons'                    => include WPZOOM_SOCIAL_ICONS_PLUGIN_PATH . 'includes/icons-data.php',
+			'iconKitsCategories'       => zoom_social_icons_kits_categories_list( 'block' ),
+			'sharingConfigId'          => $sharing_config_id,
+			'sharingConfigUrl'         => $sharing_config_url,
+			'isEditingSharingConfig'   => $is_editing_sharing_config,
 		)
 	);
 
@@ -121,15 +151,37 @@ add_action( 'init', 'wpzoom_social_icons_block_enqueue_assets' );
  * @return string The block HTML.
  */
 function wpzoom_social_sharing_block_render_callback( $attributes ) {
+	// Get the sharing buttons configuration
+	$sharing_config = get_posts(
+		array(
+			'post_type'      => 'wpzoom-sharing',
+			'posts_per_page' => 1,
+			'post_status'    => 'publish',
+		)
+	);
+
+	if ( empty( $sharing_config ) ) {
+		return '';
+	}
+
+	$config_id = $sharing_config[0]->ID;
+	$show_on_front = get_post_meta( $config_id, '_wpzoom_sharing_show_on_front', true );
+
+	// Skip rendering on front page if not enabled in settings
+	if ( is_front_page() && $show_on_front !== '1' ) {
+		return '';
+	}
+
 	// Include social sharing icons functions if not already included
 	if ( ! function_exists( 'wpzoom_social_sharing_get_svg_icon' ) ) {
 		require_once WPZOOM_SOCIAL_ICONS_PLUGIN_PATH . '/includes/social-sharing-icons.php';
 	}
 
-	// Get the current post URL and title
-	$current_url = esc_url( get_permalink() );
-	$current_title = esc_attr( get_the_title() );
-	$featured_image = esc_url( get_the_post_thumbnail_url( get_the_ID(), 'full' ) );
+	// Get current post URL and title
+	$current_url   = get_permalink();
+	$current_title = get_the_title();
+	$featured_image = get_the_post_thumbnail_url();
+	$xUsername = isset( $attributes['xUsername'] ) ? $attributes['xUsername'] : '';
 
 	// Get block attributes with defaults
 	$align = isset( $attributes['align'] ) ? $attributes['align'] : 'none';
@@ -148,7 +200,6 @@ function wpzoom_social_sharing_block_render_callback( $attributes ) {
 	$borderColor = isset( $attributes['borderColor'] ) ? $attributes['borderColor'] : '';
 	$platforms = isset( $attributes['platforms'] ) ? $attributes['platforms'] : array();
 	$oneToneColor = isset( $attributes['oneToneColor'] ) ? $attributes['oneToneColor'] : '#000000';
-	$xUsername = isset( $attributes['xUsername'] ) ? $attributes['xUsername'] : '';
 
 	// Class for block
 	$block_class = 'wp-block-wpzoom-blocks-social-sharing';
@@ -304,8 +355,8 @@ function wpzoom_social_sharing_block_render_callback( $attributes ) {
 		$output .= 'href="' . esc_url( $share_url ) . '" ';
 		$output .= 'title="' . esc_attr( $platform['name'] ) . '" ';
 		
-		// Don't use target="_blank" for copy-link only
-		if ( $platform['id'] !== 'copy-link' ) {
+		// Don't use target="_blank" for copy-link and print
+		if ( $platform['id'] !== 'copy-link' && $platform['id'] !== 'print' ) {
 			$output .= 'target="_blank" rel="noopener noreferrer" ';
 		}
 		
@@ -325,66 +376,93 @@ function wpzoom_social_sharing_block_render_callback( $attributes ) {
 	
 	$output .= '</ul>';
 
-	// Add JS for copy link functionality
+	// Check which special platforms are enabled
 	$copy_link_enabled = false;
+	$print_enabled = false;
 	foreach ( $enabled_platforms as $platform ) {
 		if ( $platform['id'] === 'copy-link' ) {
 			$copy_link_enabled = true;
-			break;
+		}
+		if ( $platform['id'] === 'print' ) {
+			$print_enabled = true;
 		}
 	}
 
-	if ( $copy_link_enabled ) {
+	// Add JS for copy link functionality (only once per page)
+	static $copy_link_script_added = false;
+	if ( $copy_link_enabled && ! $copy_link_script_added ) {
 		// Get success icon SVG
-		$success_icon = wpzoom_social_sharing_get_success_icon($iconSize, $iconColor);
-		
+		$success_icon = wpzoom_social_sharing_get_success_icon(20, '#ffffff');
+
 		$output .= '<script>
 			document.addEventListener("DOMContentLoaded", function() {
 				var copyLinks = document.querySelectorAll("a[data-platform=\'copy-link\']");
 				copyLinks.forEach(function(link) {
+					if (link.hasAttribute("data-listener-added")) return;
+					link.setAttribute("data-listener-added", "true");
+
 					link.addEventListener("click", function(e) {
 						e.preventDefault();
 						var tempInput = document.createElement("input");
-						tempInput.value = "' . esc_js( $current_url ) . '";
+						tempInput.value = window.location.href;
 						document.body.appendChild(tempInput);
 						tempInput.select();
 						document.execCommand("copy");
 						document.body.removeChild(tempInput);
-						
+
 						var originalText = this.querySelector(".social-sharing-icon-label")?.textContent || "";
 						var originalTitle = this.getAttribute("title");
 						var originalIcon = this.querySelector("svg").outerHTML;
-						
+
 						// Show success feedback
 						this.setAttribute("title", "' . esc_js( __( 'Copied!', 'social-icons-widget-by-wpzoom' ) ) . '");
-						this.classList.add("copied"); // Add class for animation
-						
+						this.classList.add("copied");
+
 						if (this.querySelector(".social-sharing-icon-label")) {
-							// If labels are shown, update the label text
 							this.querySelector(".social-sharing-icon-label").textContent = "' . esc_js( __( 'Copied!', 'social-icons-widget-by-wpzoom' ) ) . '";
 						} else {
-							// If labels are not shown, change the icon to a check mark
 							this.querySelector("svg").outerHTML = \'' . $success_icon . '\';
 						}
-						
+
+						var self = this;
 						setTimeout(function() {
-							// Reset back to original state
-							link.setAttribute("title", originalTitle);
-							link.classList.remove("copied"); // Remove class after animation
-							if (link.querySelector(".social-sharing-icon-label")) {
-								link.querySelector(".social-sharing-icon-label").textContent = originalText;
+							self.setAttribute("title", originalTitle);
+							self.classList.remove("copied");
+							if (self.querySelector(".social-sharing-icon-label")) {
+								self.querySelector(".social-sharing-icon-label").textContent = originalText;
 							} else {
-								link.querySelector("svg").outerHTML = originalIcon;
+								self.querySelector("svg").outerHTML = originalIcon;
 							}
 						}, 2000);
 					});
 				});
 			});
 		</script>';
+		$copy_link_script_added = true;
 	}
-	
+
+	// Add JS for print functionality (only once per page)
+	static $print_script_added = false;
+	if ( $print_enabled && ! $print_script_added ) {
+		$output .= '<script>
+			document.addEventListener("DOMContentLoaded", function() {
+				var printLinks = document.querySelectorAll("a[data-platform=\'print\']");
+				printLinks.forEach(function(link) {
+					if (link.hasAttribute("data-listener-added")) return;
+					link.setAttribute("data-listener-added", "true");
+
+					link.addEventListener("click", function(e) {
+						e.preventDefault();
+						window.print();
+					});
+				});
+			});
+		</script>';
+		$print_script_added = true;
+	}
+
 	$output .= '</div>';
-	
+
 	return $output;
 }
 
@@ -476,6 +554,70 @@ function wpzoom_social_icons_block_register_secondary_assets() {
 add_action( 'wp_enqueue_scripts', 'wpzoom_social_icons_block_register_secondary_assets' );
 
 /**
+ * Check if a block exists in widget areas (block-based widgets).
+ *
+ * WordPress stores block widgets in the 'widget_block' option.
+ * This function parses all widget blocks to check if a specific block is used.
+ *
+ * @since 4.2.9
+ * @param string $block_name The block name to search for.
+ * @return boolean True if the block is found in any widget area.
+ */
+function wpzoom_has_block_in_widget_area( $block_name ) {
+	// Get all block widgets from the option.
+	$widget_blocks = get_option( 'widget_block', array() );
+
+	if ( empty( $widget_blocks ) || ! is_array( $widget_blocks ) ) {
+		return false;
+	}
+
+	foreach ( $widget_blocks as $widget_block ) {
+		// Skip if not an array or doesn't have content.
+		if ( ! is_array( $widget_block ) || empty( $widget_block['content'] ) ) {
+			continue;
+		}
+
+		// Check if the block name exists in the widget content.
+		if ( false !== strpos( $widget_block['content'], '<!-- wp:' . $block_name ) ) {
+			return true;
+		}
+
+		// Also check for nested blocks by parsing the content.
+		$blocks = parse_blocks( $widget_block['content'] );
+		if ( wpzoom_search_blocks_recursive( $blocks, $block_name ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Recursively search for a block name in parsed blocks.
+ *
+ * @since 4.2.9
+ * @param array  $blocks Array of parsed blocks.
+ * @param string $block_name The block name to search for.
+ * @return boolean True if block is found.
+ */
+function wpzoom_search_blocks_recursive( $blocks, $block_name ) {
+	foreach ( $blocks as $block ) {
+		if ( ! empty( $block['blockName'] ) && $block['blockName'] === $block_name ) {
+			return true;
+		}
+
+		// Check inner blocks recursively.
+		if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ) {
+			if ( wpzoom_search_blocks_recursive( $block['innerBlocks'], $block_name ) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
  * Check has reusable block
  *
  * @param string $block_name The block name.
@@ -511,10 +653,12 @@ function wpzoom_has_reusable_block( $block_name, $id = 0 ) {
  * Enqueue css and js files.
  */
 function wpzoom_social_icons_block_enqueue_secondary_assets() {
-	if ( wpzoom_has_reusable_block( 'wpzoom-blocks/social-icons' ) || 
-		 wpzoom_has_reusable_block( 'wpzoom-blocks/social-sharing' ) || 
-		 has_block( 'wpzoom-blocks/social-icons' ) || 
-		 has_block( 'wpzoom-blocks/social-sharing' ) || 
+	if ( wpzoom_has_reusable_block( 'wpzoom-blocks/social-icons' ) ||
+		 wpzoom_has_reusable_block( 'wpzoom-blocks/social-sharing' ) ||
+		 has_block( 'wpzoom-blocks/social-icons' ) ||
+		 has_block( 'wpzoom-blocks/social-sharing' ) ||
+		 wpzoom_has_block_in_widget_area( 'wpzoom-blocks/social-icons' ) ||
+		 wpzoom_has_block_in_widget_area( 'wpzoom-blocks/social-sharing' ) ||
 		 is_admin() ) {
 		$disable_css_loading_socicons    = WPZOOM_Social_Icons_Settings::get_option_key( 'disable-css-loading-for-socicons' );
 		$disable_css_loading_genericons  = WPZOOM_Social_Icons_Settings::get_option_key( 'disable-css-loading-for-genericons' );

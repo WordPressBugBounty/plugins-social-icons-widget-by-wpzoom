@@ -170,12 +170,6 @@ registerBlockType( 'wpzoom-blocks/social-sharing', {
 					color: '#FF4500'
 				},
 				{
-					id: 'pocket',
-					name: 'Pocket',
-					enabled: false,
-					color: '#EF3F56'
-				},
-				{
 					id: 'telegram',
 					name: 'Telegram',
 					enabled: false,
@@ -203,6 +197,12 @@ registerBlockType( 'wpzoom-blocks/social-sharing', {
 					id: 'copy-link',
 					name: 'Copy Link',
 					enabled: true,
+					color: '#333333'
+				},
+				{
+					id: 'print',
+					name: 'Print',
+					enabled: false,
 					color: '#333333'
 				}
 			],
