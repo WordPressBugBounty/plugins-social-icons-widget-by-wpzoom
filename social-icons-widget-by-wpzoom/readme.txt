@@ -5,11 +5,11 @@ Tags: social icons, social media icons, share buttons, click to chat, whatsapp
 Requires at least: 6.5
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 5.0.0
+Stable tag: 5.0.1
 License: GNU General Public License v2.0 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Social media icons and share buttons for any site: 2,400+ icons, block, widget & Elementor. Plus a Click to Chat button for WhatsApp, Telegram & Messenger.
+Social media icons and share buttons: 2,400+ icons, block, widget & Elementor. Plus a Click to Chat button for WhatsApp, Telegram & Messenger.
 
 == Description ==
 
@@ -276,18 +276,23 @@ Floating Buttons is a PRO feature that displays your social sharing icons as a f
 
 == Screenshots ==
 
-1. Social Icons Block
+1. Social Icons block: paste a profile link and the icon, name and brand color are picked for you
 2. Social Icons & Sharing Buttons Preview
 3. Social Sharing Block
 4. Sharing Buttons in Posts & Pages
 5. Customizing Sharing Buttons
-6. Click to Chat settings: channels, launcher position, size, colors and icons
+6. The WPZOOM Connect dashboard: social icons, share buttons and chat at a glance
 7. One floating button for every channel: AI Chat, WhatsApp, Telegram, Messenger and Viber
 8. AI Chat answers visitors from your own pages and links the page the answer came from
-9. Turn on AI Chat in one click, after a free scan of what your site already answers
+9. Click to Chat settings: channels, launcher style, position, size, colors and icons
 10. Custom SVG Icons
+11. Social Profiles block: your profiles as a list with handles and follower counts
+12. Icon library: browse and search 2,400+ icons
 
 == Changelog ==
+
+= 5.0.1 =
+* NEW: "Manage with AI" in the Social Icons menu: one click installs and activates the free WPZOOM AI Connect plugin, so Claude or ChatGPT can edit your site for you. It is also offered on the Overview, and once in a dismissible notice on the Dashboard and Plugins screens. Shown on WordPress 6.9 and newer, until AI Connect is active
 
 = 5.0.0 =
 * MAJOR: Social Icons Widget is now WPZOOM Connect 5.0: a new dashboard under “Social Icons”, icons drawn as SVG instead of icon fonts, 2,400+ icons with an icon library to browse, icons without links and an “Icon by WPZOOM” block, a Social Profiles block, and the Google Preferred Sources button. Sites that update get a short “What’s new” tour on the Overview
